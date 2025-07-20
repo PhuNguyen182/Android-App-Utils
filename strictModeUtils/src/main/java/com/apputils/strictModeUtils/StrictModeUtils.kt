@@ -8,32 +8,10 @@ import android.util.Log
  * Provides methods to enable StrictMode with various configurations
  * and detect common issues that can cause app crashes.
  */
-object StrictModeUtils {
-    
-    private const val TAG = "StrictModeUtils"
-    
-    /**
-     * StrictMode configuration options
-     */
-    data class StrictModeConfig(
-        val enableThreadPolicy: Boolean = true,
-        val enableVmPolicy: Boolean = true,
-        val detectDiskReads: Boolean = true,
-        val detectDiskWrites: Boolean = true,
-        val detectNetwork: Boolean = true,
-        val detectCustomSlowCalls: Boolean = true,
-        val detectResourceMismatches: Boolean = true,
-        val detectUnbufferedIo: Boolean = true,
-        val detectLeakedClosableObjects: Boolean = true,
-        val detectLeakedRegistrationObjects: Boolean = true,
-        val detectLeakedSqlLiteObjects: Boolean = true,
-        val penaltyLog: Boolean = true,
-        val penaltyDialog: Boolean = false,
-        val penaltyDeath: Boolean = false,
-        val penaltyDropBox: Boolean = true,
-        val penaltyFlashScreen: Boolean = false,
-        val penaltyDeathOnNetwork: Boolean = false
-    )
+class StrictModeUtils {
+    object Constants {
+        const val TAG = "StrictModeUtils"
+    }
     
     /**
      * Enable StrictMode with default configuration
@@ -55,9 +33,9 @@ object StrictModeUtils {
                 enableVmPolicy(config)
             }
             
-            Log.i(TAG, "StrictMode enabled successfully")
+            Log.i(Constants.TAG, "StrictMode enabled successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to enable StrictMode: ${e.message}")
+            Log.e(Constants.TAG, "Failed to enable StrictMode: ${e.message}")
         }
     }
     
@@ -135,7 +113,6 @@ object StrictModeUtils {
         if (config.penaltyDropBox) {
             vmPolicyBuilder.penaltyDropBox()
         }
-
         
         StrictMode.setVmPolicy(vmPolicyBuilder.build())
     }
@@ -201,9 +178,9 @@ object StrictModeUtils {
         try {
             StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX)
             StrictMode.setVmPolicy(StrictMode.VmPolicy.LAX)
-            Log.i(TAG, "StrictMode disabled")
+            Log.i(Constants.TAG, "StrictMode disabled")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to disable StrictMode: ${e.message}")
+            Log.e(Constants.TAG, "Failed to disable StrictMode: ${e.message}")
         }
     }
     
@@ -218,7 +195,7 @@ object StrictModeUtils {
             // Check if policies are not LAX
             threadPolicy != StrictMode.ThreadPolicy.LAX || vmPolicy != StrictMode.VmPolicy.LAX
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to check StrictMode status: ${e.message}")
+            Log.e(Constants.TAG, "Failed to check StrictMode status: ${e.message}")
             false
         }
     }
@@ -241,7 +218,7 @@ object StrictModeUtils {
                 penaltyDropBox = true
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get current StrictMode config: ${e.message}")
+            Log.e(Constants.TAG, "Failed to get current StrictMode config: ${e.message}")
             null
         }
     }

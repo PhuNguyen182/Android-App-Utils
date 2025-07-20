@@ -4,10 +4,7 @@ import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
 import android.content.Context;
 import android.util.Log;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,100 +12,18 @@ import java.util.Map;
 
 public class ApplicationExitInfoUtil {
     private static final String TAG = "ExitInfoUtil";
+    private static String currentPackageName;
 
-    // Exit reason constants for better readability
-    public static final class ExitReason {
-        public static final int UNKNOWN = ApplicationExitInfo.REASON_UNKNOWN;
-        public static final int EXIT_SELF = ApplicationExitInfo.REASON_EXIT_SELF;
-        public static final int SIGNALED = ApplicationExitInfo.REASON_SIGNALED;
-        public static final int LOW_MEMORY = ApplicationExitInfo.REASON_LOW_MEMORY;
-        public static final int CRASH = ApplicationExitInfo.REASON_CRASH;
-        public static final int CRASH_NATIVE = ApplicationExitInfo.REASON_CRASH_NATIVE;
-        public static final int ANR = ApplicationExitInfo.REASON_ANR;
-        public static final int INITIALIZATION_FAILURE = ApplicationExitInfo.REASON_INITIALIZATION_FAILURE;
-        public static final int PERMISSION_CHANGE = ApplicationExitInfo.REASON_PERMISSION_CHANGE;
-        public static final int EXCESSIVE_RESOURCE_USAGE = ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE;
-        public static final int USER_REQUESTED = ApplicationExitInfo.REASON_USER_REQUESTED;
-        public static final int USER_STOPPED = ApplicationExitInfo.REASON_USER_STOPPED;
-        public static final int DEPENDENCY_DIED = ApplicationExitInfo.REASON_DEPENDENCY_DIED;
-        public static final int OTHER = ApplicationExitInfo.REASON_OTHER;
+    public static void setAppPackageName(String packageName) {
+        currentPackageName = packageName;
     }
-
-    /**
-     * Data class to hold exit information in a Unity-friendly format
-     */
-    public static class ExitInfoData {
-        public long timestamp;
-        public int pid;
-        public int realUid;
-        public int packageUid;
-        public String processName;
-        public int reason;
-        public String reasonString;
-        public int importance;
-        public long pss;
-        public long rss;
-        public String description;
-        public String traceData;
-        public int status;
-        public int definingUid;
-
-        public ExitInfoData() {}
-
-        public ExitInfoData(ApplicationExitInfo info) {
-            this.timestamp = info.getTimestamp();
-            this.pid = info.getPid();
-            this.realUid = info.getRealUid();
-            this.packageUid = info.getPackageUid();
-            this.processName = info.getProcessName();
-            this.reason = info.getReason();
-            this.reasonString = getReasonString(info.getReason());
-            this.importance = info.getImportance();
-            this.pss = info.getPss();
-            this.rss = info.getRss();
-            this.description = info.getDescription();
-            this.status = info.getStatus();
-            this.definingUid = info.getDefiningUid();
-            this.traceData = extractTraceData(info);
-        }
-
-        // Convert to JSON-like string for Unity
-        public String toJsonString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{");
-            sb.append("\"timestamp\":").append(timestamp).append(",");
-            sb.append("\"pid\":").append(pid).append(",");
-            sb.append("\"realUid\":").append(realUid).append(",");
-            sb.append("\"packageName\":\"").append(packageUid).append("\",");
-            sb.append("\"processName\":\"").append(processName).append("\",");
-            sb.append("\"reason\":").append(reason).append(",");
-            sb.append("\"reasonString\":\"").append(reasonString).append("\",");
-            sb.append("\"importance\":").append(importance).append(",");
-            sb.append("\"pss\":").append(pss).append(",");
-            sb.append("\"rss\":").append(rss).append(",");
-            sb.append("\"description\":\"").append(escapeJson(description)).append("\",");
-            sb.append("\"status\":").append(status).append(",");
-            sb.append("\"definingUid\":").append(definingUid);
-            if (traceData != null && !traceData.isEmpty()) {
-                sb.append(",\"traceData\":\"").append(escapeJson(traceData)).append("\"");
-            }
-            sb.append("}");
-            return sb.toString();
-        }
-
-        private String escapeJson(String str) {
-            if (str == null) return "";
-            return str.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
-        }
-    }
-
 
     /**
      * Get all historical exit information for the current package
      * Unity-friendly method that returns array of ExitInfoData
      */
     public static ExitInfoData[] getAllExitInfo(Context context) {
-        return getAllExitInfo(context, null, 0, Integer.MAX_VALUE);
+        return getAllExitInfo(context, currentPackageName, 0, Integer.MAX_VALUE);
     }
 
     /**
@@ -146,7 +61,7 @@ public class ApplicationExitInfoUtil {
      * Get the most recent exit information
      */
     public static ExitInfoData getLatestExitInfo(Context context) {
-        ExitInfoData[] exitInfoArray = getAllExitInfo(context, null, 0, 1);
+        ExitInfoData[] exitInfoArray = getAllExitInfo(context, currentPackageName, 0, 1);
         return exitInfoArray.length > 0 ? exitInfoArray[0] : null;
     }
 
@@ -209,33 +124,6 @@ public class ApplicationExitInfoUtil {
             case ExitReason.DEPENDENCY_DIED: return "Dependency Died";
             case ExitReason.OTHER: return "Other";
             default: return "Unknown (" + reason + ")";
-        }
-    }
-
-    /**
-     * Extract trace data from ApplicationExitInfo
-     */
-    private static String extractTraceData(ApplicationExitInfo info) {
-        try (InputStream traceInputStream = info.getTraceInputStream()) {
-            if (traceInputStream == null) {
-                return null;
-            }
-
-            StringBuilder traceData = new StringBuilder();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(traceInputStream));
-            String line;
-            int lineCount = 0;
-            final int MAX_LINES = 100; // Limit trace data to prevent memory issues
-
-            while ((line = reader.readLine()) != null && lineCount < MAX_LINES) {
-                traceData.append(line).append("\n");
-                lineCount++;
-            }
-
-            return traceData.toString();
-        } catch (IOException e) {
-            Log.w(TAG, "Failed to read trace data", e);
-            return null;
         }
     }
 
