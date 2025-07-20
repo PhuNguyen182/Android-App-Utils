@@ -1,5 +1,6 @@
 package com.apputils.applicationExitInfo;
 
+import com.google.gson.Gson;
 import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
 import android.content.Context;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 public class ApplicationExitInfoUtil {
     private static final String TAG = "ExitInfoUtil";
+    private static final Gson jsonConverter = new Gson();
     private static String currentPackageName;
 
     public static void setAppPackageName(String packageName) {
@@ -163,9 +165,11 @@ public class ApplicationExitInfoUtil {
             report.append("  Timestamp: ").append(new java.util.Date(info.timestamp)).append("\n");
             report.append("  Reason: ").append(info.reasonString).append("\n");
             report.append("  Process: ").append(info.processName).append(" (PID: ").append(info.pid).append(")\n");
+
             if (info.description != null && !info.description.isEmpty()) {
                 report.append("  Description: ").append(info.description).append("\n");
             }
+
             report.append("\n");
         }
 
@@ -177,15 +181,6 @@ public class ApplicationExitInfoUtil {
      */
     public static String getAllExitInfoAsJson(Context context) {
         ExitInfoData[] exitInfoArray = getAllExitInfo(context);
-
-        StringBuilder json = new StringBuilder();
-        json.append("[");
-        for (int i = 0; i < exitInfoArray.length; i++) {
-            if (i > 0) json.append(",");
-            json.append(exitInfoArray[i].toJsonString());
-        }
-        json.append("]");
-
-        return json.toString();
+        return jsonConverter.toJson(exitInfoArray);
     }
 }
